@@ -1,0 +1,2 @@
+# server.py uses only the Python standard library (3.8+), so there are no
+# packages to install. This file exists so Render's Python build step succeeds.
