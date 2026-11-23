@@ -413,7 +413,7 @@ async def main():
     http, wsch = ("https", "wss") if ctx else ("http", "ws")
 
     server = await asyncio.start_server(handle, args.host, args.port, ssl=ctx)
-    log(f"serving {HTML_PATH.name}  ({wsch}:// enabled)")
+    log(f"serving {HTML_PATH.name if HTML_PATH else 'no HTML file (WebSocket only)'}  ({wsch}:// enabled)")
     log(f"open    {http}://localhost:{args.port}")
     for ip in lan_ips():
         log(f"        {http}://{ip}:{args.port}   (other devices on your network)")
