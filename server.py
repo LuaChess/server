@@ -40,6 +40,8 @@ A lobby holds at most two players (host + one friend). Any other message from a
 client that is in a lobby is logged and relayed unchanged to the other player, so
 future game messages (moves, resign, ...) will pass straight through.
 """
+
+import os
 import argparse
 import asyncio
 import base64
@@ -329,8 +331,19 @@ async def handle(reader, writer):
         if method not in ("GET", "HEAD"):
             writer.write(http_response(405))
         elif path in ("/", "/index.html"):
-            body = HTML_PATH.read_bytes()  # re-read each time so edits show up on refresh
-            writer.write(http_response(200, b"" if method == "HEAD" else body, "text/html; charset=utf-8"))
+            if HTML_PATH:
+                body = HTML_PATH.read_bytes()
+                writer.write(http_response(
+                    200,
+                    b"" if method == "HEAD" else body,
+                    "text/html; charset=utf-8"
+                ))
+            else:
+                body = b"LuaChess WebSocket Server is running!"
+                writer.write(http_response(
+                    200,
+                    b"" if method == "HEAD" else body
+                ))
         elif path == "/favicon.ico":
             writer.write(http_response(204))
         else:
@@ -351,14 +364,18 @@ def find_html(arg):
         if not p.is_file():
             sys.exit(f"HTML file not found: {p}")
         return p
+
     here = Path(__file__).resolve().parent
     idx = here / "index.html"
+
     if idx.is_file():
         return idx
+
     found = sorted(here.glob("*.html"))
     if len(found) == 1:
         return found[0]
-    sys.exit("Couldn't pick an HTML file automatically. Pass one with --html path/to/file.html")
+
+    return None
 
 
 def lan_ips():
@@ -382,7 +399,7 @@ async def main():
     global HTML_PATH
     ap = argparse.ArgumentParser(description="LuaChess test server")
     ap.add_argument("--host", default=None, help="bind address (default: all interfaces, IPv4 + IPv6)")
-    ap.add_argument("--port", type=int, default=8765)
+    ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8765)))
     ap.add_argument("--html", help="path to the HTML file to serve")
     ap.add_argument("--cert", help="TLS certificate (enables https + wss)")
     ap.add_argument("--key", help="TLS private key (used with --cert)")
